@@ -13,6 +13,9 @@ using ServerApp.Models;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 namespace ServerApp {
     public class Startup {
@@ -53,6 +56,12 @@ namespace ServerApp {
                 options.Cookie.HttpOnly = false;
                 options.Cookie.IsEssential = true;
             });
+
+            services.AddResponseCompression(opts => {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    new[] {"application/octet-stream"}
+                );
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
@@ -68,6 +77,13 @@ namespace ServerApp {
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            app.UseStaticFiles(new StaticFileOptions {
+                RequestPath = "/blazor",
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(),
+                        "../BlazorApp/wwwroot"))
+            });
+
             app.UseSession();
 
             app.UseRouting();
@@ -82,9 +98,15 @@ namespace ServerApp {
                     name: "angular_fallback",
                     pattern: "{target:regex(store|cart|checkout)}/{*catchall}", 
                     defaults: new { controller = "Home", action = "Index" });
+                
+                endpoints.MapFallbackToClientSideBlazor<BlazorApp
+                    .Startup>("blazor/{*path:nonfile}", "index.html");
 
                 endpoints.MapRazorPages();
             });
+
+            app.Map("/blazor", opts =>
+                opts.UseClientSideBlazorFiles<BlazorApp.Startup>());
 
             app.UseSwagger();
             app.UseSwaggerUI(options => {
