@@ -154,3 +154,5 @@ C:\Users\JancoSteenkamp\Desktop\SportStore\ServerApp\bin\Debug\netcoreapp3.0\Mon
 C:\Users\JancoSteenkamp\Desktop\SportStore\ServerApp\bin\Debug\netcoreapp3.0\BlazorApp.dll
 C:\Users\JancoSteenkamp\Desktop\SportStore\ServerApp\bin\Debug\netcoreapp3.0\BlazorApp.pdb
 C:\Users\JancoSteenkamp\Desktop\SportStore\ServerApp\obj\Debug\netcoreapp3.0\Razor\Views\Home\Blazor.cshtml.g.cs
+C:\Users\JancoSteenkamp\Desktop\SportStore\ServerApp\bin\Debug\netcoreapp3.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+C:\Users\JancoSteenkamp\Desktop\SportStore\ServerApp\obj\Debug\netcoreapp3.0\Razor\Views\Account\Login.cshtml.g.cs

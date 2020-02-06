@@ -14910,6 +14910,11 @@
       "FileKind": "mvc"
     },
     {
+      "FilePath": "c:\\Users\\JancoSteenkamp\\Desktop\\SportStore\\ServerApp\\Views\\Account\\Login.cshtml",
+      "TargetPath": "Views\\Account\\Login.cshtml",
+      "FileKind": "mvc"
+    },
+    {
       "FilePath": "c:\\Users\\JancoSteenkamp\\Desktop\\SportStore\\ServerApp\\Views\\Home\\Blazor.cshtml",
       "TargetPath": "Views\\Home\\Blazor.cshtml",
       "FileKind": "mvc"

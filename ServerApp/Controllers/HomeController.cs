@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ServerApp.Models;
 using System.Diagnostics;
 using System.Linq;
@@ -29,6 +30,11 @@ namespace ServerApp.Controllers {
         public IActionResult Error() {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id 
                 ?? HttpContext.TraceIdentifier });
+        }
+
+        [Authorize]
+        public string Protected() {
+            return "You have been authenticated";
         }
     }
 }
