@@ -17,16 +17,20 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
 
-namespace ServerApp {
-    public class Startup {
+namespace ServerApp
+{
+    public class Startup
+    {
 
-        public Startup(IConfiguration configuration) {
+        public Startup(IConfiguration configuration)
+        {
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services) {
+        public void ConfigureServices(IServiceCollection services)
+        {
 
             string connectionString =
                 Configuration["ConnectionStrings:DefaultConnection"];
@@ -34,42 +38,51 @@ namespace ServerApp {
                 options.UseSqlServer(connectionString));
 
             services.AddControllersWithViews()
-                .AddJsonOptions(opts => {
+                .AddJsonOptions(opts =>
+                {
                     opts.JsonSerializerOptions.IgnoreNullValues = true;
                 });
             services.AddRazorPages();
 
-            services.AddSwaggerGen(options => {
+            services.AddSwaggerGen(options =>
+            {
                 options.SwaggerDoc("v1",
                     new OpenApiInfo { Title = "SportsStore API", Version = "v1" });
             });
 
-            services.AddDistributedSqlServerCache(options => {
+            services.AddDistributedSqlServerCache(options =>
+            {
                 options.ConnectionString = connectionString;
                 options.SchemaName = "dbo";
                 options.TableName = "SessionData";
             });
 
-            services.AddSession(options => {
+            services.AddSession(options =>
+            {
                 options.Cookie.Name = "SportsStore.Session";
                 options.IdleTimeout = System.TimeSpan.FromHours(48);
                 options.Cookie.HttpOnly = false;
                 options.Cookie.IsEssential = true;
             });
 
-            services.AddResponseCompression(opts => {
+            services.AddResponseCompression(opts =>
+            {
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                    new[] {"application/octet-stream"}
+                    new[] { "application/octet-stream" }
                 );
             });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
-                IServiceProvider services) {
+                IServiceProvider services)
+        {
 
-            if (env.IsDevelopment()) {
+            if (env.IsDevelopment())
+            {
                 app.UseDeveloperExceptionPage();
-            } else {
+            }
+            else
+            {
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
@@ -77,7 +90,8 @@ namespace ServerApp {
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseStaticFiles(new StaticFileOptions {
+            app.UseStaticFiles(new StaticFileOptions
+            {
                 RequestPath = "/blazor",
                 FileProvider = new PhysicalFileProvider(
                     Path.Combine(Directory.GetCurrentDirectory(),
@@ -89,23 +103,24 @@ namespace ServerApp {
             app.UseRouting();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => {
+            app.UseEndpoints(endpoints =>
+            {
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
 
                 endpoints.MapControllerRoute(
                     name: "angular_fallback",
-                    pattern: "{target:regex(store|cart|checkout)}/{*catchall}", 
+                    pattern: "{target:regex(admin|store|cart|checkout):nonfile}/{*catchall}",
                     defaults: new { controller = "Home", action = "Index" });
-                
+
                 endpoints.MapControllerRoute(
                     name: "blazor_integration",
                     pattern: "/blazor/{*path:nonfile}",
-                    defaults: new { controller = "Home", action = "Blazor"}
+                    defaults: new { controller = "Home", action = "Blazor" }
                 );
-                
-               // endpoints.MapFallbackToClientSideBlazor<BlazorApp
+
+                // endpoints.MapFallbackToClientSideBlazor<BlazorApp
                 //    .Startup>("blazor/{*path:nonfile}", "index.html");
 
                 endpoints.MapRazorPages();
@@ -114,18 +129,25 @@ namespace ServerApp {
             app.Map("/blazor", opts =>
                 opts.UseClientSideBlazorFiles<BlazorApp.Startup>());
 
+            app.UseClientSideBlazorFiles<BlazorApp.Startup>();
+
             app.UseSwagger();
-            app.UseSwaggerUI(options => {
+            app.UseSwaggerUI(options =>
+            {
                 options.SwaggerEndpoint("/swagger/v1/swagger.json",
                     "SportsStore API");
             });
 
-            app.UseSpa(spa => {
+            app.UseSpa(spa =>
+            {
                 string strategy = Configuration
                     .GetValue<string>("DevTools:ConnectionStrategy");
-                if (strategy == "proxy") {
+                if (strategy == "proxy")
+                {
                     spa.UseProxyToSpaDevelopmentServer("http://127.0.0.1:4200");
-                } else if (strategy == "managed") {
+                }
+                else if (strategy == "managed")
+                {
                     spa.Options.SourcePath = "../ClientApp";
                     spa.UseAngularCliServer("start");
                 }

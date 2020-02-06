@@ -12,6 +12,11 @@ import { OrderConfirmationComponent }
     from "./store/checkout/orderConfirmation.component";
 
 const routes: Routes = [
+    {
+        path: "admin",
+        loadChildren: () => 
+            import("./admin/admin.module").then(module => module.AdminModule),
+    },
     { path: "checkout/step1", component: CheckoutDetailsComponent },
     { path: "checkout/step2", component: CheckoutPaymentComponent },
     { path: "checkout/step3", component: CheckoutSummaryComponent },
@@ -20,8 +25,8 @@ const routes: Routes = [
     { path: "cart", component: CartDetailComponent },
     { path: "store/:category/:page", component: ProductSelectionComponent },
     { path: "store/:categoryOrPage", component: ProductSelectionComponent },
-    { path: "store", component: ProductSelectionComponent },
-    { path: "", redirectTo: "/store", pathMatch: "full" }
+    { path: "store", redirectTo: "store/", pathMatch: "full" },
+    { path: "", redirectTo: "store/", pathMatch: "full" }
 ];
 
 @NgModule({

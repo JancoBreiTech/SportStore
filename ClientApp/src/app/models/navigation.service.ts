@@ -2,9 +2,16 @@ import { Injectable } from "@angular/core";
 import { Router, ActivatedRoute, NavigationEnd } from "@angular/router";
 import { Repository } from '../models/repository';
 import { filter } from "rxjs/operators";
+import { Subject, Observable } from 'rxjs';
+
+export type NavigationUpdate = {
+    category: string,
+    page: number
+}
 
 @Injectable()
 export class NavigationService {
+    private  changeSubject = new Subject<NavigationUpdate>();
 
     constructor(private repository: Repository, private router: Router,
             private active: ActivatedRoute) {
@@ -16,13 +23,14 @@ export class NavigationService {
     private handleNavigationChange() {
         let active = this.active.firstChild.snapshot;
         if (active.url.length > 0 && active.url[0].path === "store") {
+            this.repository.filter.search = "";
             if (active.params["categoryOrPage"] !== undefined) {
                 let value = Number.parseInt(active.params["categoryOrPage"]);
                 if (!Number.isNaN(value)) {
                     this.repository.filter.category = "";
                     this.repository.paginationObject.currentPage = value;
                 } else {
-                    this.repository.filter.category 
+                    this.repository.filter.category
                         = active.params["categoryOrPage"];
                     this.repository.paginationObject.currentPage = 1;
                 }
@@ -33,7 +41,15 @@ export class NavigationService {
                     = Number.parseInt(active.params["page"]) || 1
             }
             this.repository.getProducts();
+            this.changeSubject.next({
+                category: this.currentCategory,
+                page: this.currentPage
+            });
         }
+    }
+
+    get change(): Observable<NavigationUpdate> {
+        return this.changeSubject;
     }
 
     get categories(): string[] {
