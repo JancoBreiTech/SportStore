@@ -7,7 +7,8 @@ using System.Collections.Generic;
 namespace ServerApp.Controllers {
 
     [Route("api/suppliers")]
-    [Authorize(Roles="Administrator")]
+    [Authorize(Roles = "Administrator")]
+    [AutoValidateAntiforgeryToken]
     public class SupplierValuesController : Controller {
         private DataContext context;
 

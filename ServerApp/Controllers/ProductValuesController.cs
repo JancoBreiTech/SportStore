@@ -15,6 +15,7 @@ namespace ServerApp.Controllers {
     [Route("api/products")]
     [ApiController]
     [Authorize(Roles = "Administrator")]
+    [AutoValidateAntiforgeryToken]
     public class ProductValuesController : Controller {
         private DataContext context;
 
@@ -25,11 +26,15 @@ namespace ServerApp.Controllers {
         [HttpGet("{id}")]
         [AllowAnonymous]
         public Product GetProduct(long id) {      
-            Product result = context.Products
-                .Include(p => p.Supplier).ThenInclude(s => s.Products)
-                .Include(p => p.Ratings)
-                .FirstOrDefault(p => p.ProductId == id);
+            IQueryable<Product> query = context.Products
+                .Include(p => p.Ratings);
 
+            if (HttpContext.User.IsInRole("Administrator")){
+                query = query.Include(p => p.Supplier)
+                    .ThenInclude(s => s.Products);
+            }
+
+            Product result = query.First(p => p.ProductId == id);
 
             if (result != null) {
                 if (result.Supplier != null) {
@@ -68,7 +73,7 @@ namespace ServerApp.Controllers {
                     || p.Description.ToLower().Contains(searchLower));
             }
 
-            if (related && HttpContext.User.IsInRole("Administrator")) {
+            if (related) {
                 query = query.Include(p => p.Supplier).Include(p => p.Ratings);
                 List<Product> data = query.ToList();
                 data.ForEach(p => {

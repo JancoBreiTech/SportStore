@@ -17,15 +17,24 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Http;
 
 namespace ServerApp
 {
     public class Startup
     {
 
-        public Startup(IConfiguration configuration)
+        public Startup(IWebHostEnvironment env)
         {
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddEnvironmentVariables()
+                .AddCommandLine(System.Environment.GetCommandLineArgs()
+                    .Skip(1).ToArray());
+            Configuration = builder.Build();
         }
 
         public IConfiguration Configuration { get; }
@@ -50,11 +59,11 @@ namespace ServerApp
                 });
             services.AddRazorPages();
 
-            services.AddSwaggerGen(options =>
+           /* services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1",
                     new OpenApiInfo { Title = "SportsStore API", Version = "v1" });
-            });
+            });*/
 
             services.AddDistributedSqlServerCache(options =>
             {
@@ -77,10 +86,16 @@ namespace ServerApp
                     new[] { "application/octet-stream" }
                 );
             });
+
+            services.AddAntiforgery( options => {
+                options.HeaderName = "X-XSRF-TOKEN";
+            });
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
-                IServiceProvider services)
+                IServiceProvider services, IAntiforgery antiforgery,
+                IHostApplicationLifetime lifetime)
         {
 
             if (env.IsDevelopment())
@@ -104,11 +119,31 @@ namespace ServerApp
                         "../BlazorApp/wwwroot"))
             });
 
+            app.UseStaticFiles(new StaticFileOptions {
+                RequestPath = "",
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(),
+                    "./wwwroot/app"))
+            });
+
             app.UseSession();
 
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.Use(nextDelegate => context => {
+                string path = context.Request.Path.Value;
+                string[] directUrls = {"/admin", "/store", "/cart", "checkout"};
+                if (path.StartsWith("/api") || string.Equals("/", path) || directUrls.Any(url => path.StartsWith(url))){
+                    var tokens = antiforgery.GetAndStoreTokens(context);
+                    context.Response.Cookies.Append("XSRF-TOKEN",
+                    tokens.RequestToken, new CookieOptions(){
+                        HttpOnly = false, Secure = false, IsEssential = true
+                    });
+                }
+                return nextDelegate(context);
+            });
 
             app.UseEndpoints(endpoints =>
             {
@@ -133,12 +168,12 @@ namespace ServerApp
                 endpoints.MapRazorPages();
             });
 
-            app.Map("/blazor", opts =>
-                opts.UseClientSideBlazorFiles<BlazorApp.Startup>());
+            /*app.Map("/blazor", opts =>
+                opts.UseClientSideBlazorFiles<BlazorApp.Startup>());*/
 
             app.UseClientSideBlazorFiles<BlazorApp.Startup>();
 
-            app.UseSwagger();
+            /*app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
                 options.SwaggerEndpoint("/swagger/v1/swagger.json",
@@ -158,10 +193,18 @@ namespace ServerApp
                     spa.Options.SourcePath = "../ClientApp";
                     spa.UseAngularCliServer("start");
                 }
-            });
+            });*/
 
-            SeedData.SeedDatabase(services.GetRequiredService<DataContext>());
-            IdentitySeedData.SeedDatabase(services).Wait();
+            //SeedData.SeedDatabase(services.GetRequiredService<DataContext>());
+            //IdentitySeedData.SeedDatabase(services).Wait();
+
+            if ((Configuration["INITDB"] ?? "false") == "true"){
+                System.Console.WriteLine("Preparing Database...");
+                SeedData.SeedDatabase(services.GetRequiredService<DataContext>());
+                IdentitySeedData.SeedDatabase(services).Wait();
+                System.Console.WriteLine("Database preparation complete");
+                lifetime.StopApplication();
+            }
         }
     }
 }
